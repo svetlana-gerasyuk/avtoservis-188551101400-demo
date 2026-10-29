@@ -83,7 +83,19 @@ h1, h2, h3 { hyphens: none; -webkit-hyphens: none; overflow-wrap: normal; }
 .s-chip[aria-disabled="true"]:hover { border-color: var(--hair); }
 .s-chip--row { min-height: 46px; }
 .s-chip--row b { font-size: .95rem; }
-.s-chip--row b.ga-price-ask { font-weight: 600; font-size: .82rem; color: var(--c-ink-soft); }
+.s-chip--row b.ga-price-ask { font-weight: 600; font-size: .82rem; color: var(--c-ink-soft); white-space: normal; text-align: right; max-width: 7.5em; line-height: 1.25; }
+/* несколько услуг: у выбранной – галочка перед названием */
+.s-chip--row > span { display: inline-flex; align-items: center; gap: 8px; }
+.s-chip--row > span::before { content: ""; flex: none; width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid color-mix(in srgb, var(--c-ink-soft) 70%, transparent); box-sizing: border-box; }
+.s-chip--row:has(input:checked) > span::before { border-color: var(--c-accent-ink); background: var(--c-accent-ink)
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='%237ac9e1' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px no-repeat; }
+.ga-legend-hint { font-weight: 500; letter-spacing: 0; text-transform: none; font-size: .8rem; }
+.ga-sum { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin-top: 12px; padding: 10px 14px; border-radius: 10px;
+  background: color-mix(in srgb, var(--c-accent) 9%, transparent); font-size: .9rem; color: var(--c-ink-soft); font-variant-numeric: tabular-nums; }
+.ga-sum b { color: var(--c-accent); font-weight: 700; }
+.ga-sum__note { margin-top: 6px; font-size: .82rem; color: var(--c-ink-soft); }
+.ga-sum__note[hidden] { display: none; }
+[data-ga-svc-err] { margin-top: 6px; }
 .s-chips[data-s-times] { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); }
 .s-chips[data-s-times] .s-chip { justify-content: center; padding: 8px 6px; font-variant-numeric: tabular-nums; }
 .s-chips[data-s-days] .s-chip { padding: 8px 12px; }

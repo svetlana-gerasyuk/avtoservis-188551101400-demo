@@ -79,14 +79,44 @@
     };
     const phoneFmt = (d) => d.length === 11 ? `+7 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7, 9)}-${d.slice(9)}` : d;
 
+    // услуги: можно несколько; сумма – только по известным ценам, «от», если хоть одна цена «от»
+    const countEl = form.querySelector("[data-ga-count]"), totalEl = form.querySelector("[data-ga-total]");
+    const repairEl = form.querySelector("[data-ga-repair]"), svcErr = form.querySelector("[data-ga-svc-err]");
+    const picked = () => [...form.querySelectorAll("input[name=svc]:checked")];
+    const estimate = () => {
+      const list = picked(), priced = list.filter((s) => s.dataset.price);
+      const sum = priced.reduce((a, s) => a + +s.dataset.price, 0);
+      const from = priced.some((s) => s.dataset.from);
+      return { list, sum, from, priced: priced.length > 0, repair: list.some((s) => !s.dataset.price) };
+    };
+    const svcLine = (s) => s.dataset.name + " – " + (s.dataset.price ? (s.dataset.from ? "от " : "") + rub(+s.dataset.price) : "после осмотра");
+    const updateSum = () => {
+      const e = estimate();
+      countEl.textContent = "Выбрано услуг: " + e.list.length;
+      totalEl.textContent = e.priced ? "Предварительно: " + (e.from ? "от " : "") + rub(e.sum) : "";
+      repairEl.hidden = !e.repair;
+      if (e.list.length) svcErr.textContent = "";
+      nextBtn.setAttribute("aria-disabled", e.list.length ? "false" : "true");
+      sendBtn.setAttribute("aria-disabled", e.list.length && tg ? "false" : "true");
+      return e;
+    };
+    const needService = () => {
+      if (picked().length) return true;
+      svcErr.textContent = "Выберите хотя бы одну услугу.";
+      const first = form.querySelector("input[name=svc]"); first.focus({ preventScroll: true });
+      first.closest("fieldset").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+      return false;
+    };
+
     const compose = () => {
-      const s = form.querySelector("input[name=svc]:checked");
+      const e = updateSum();
       const d = days[+(daysBox.querySelector("input:checked") || {}).value || 0];
       const t = timesBox.querySelector("input:checked");
-      const price = s && s.dataset.price ? " (" + (s.dataset.from ? "от " : "") + rub(+s.dataset.price) + ")" : " (стоимость – после диагностики)";
       const lines = [
         "Здравствуйте! Заявка на запись в ГудАвто с сайта.",
-        "Услуга: " + (s ? s.dataset.name + price : "не выбрана"),
+        "Услуги:",
+        ...(e.list.length ? e.list.map((s) => "• " + svcLine(s)) : ["• не выбраны"]),
+        "Предварительная стоимость: " + (e.priced ? (e.from ? "от " : "") + rub(e.sum) : "после осмотра") + (e.priced && e.repair ? " + ремонт – после осмотра" : ""),
         "Желаемое время: " + (d ? d.full : "") + (t ? ", " + t.value : ", время уточню"),
         "Имя: " + (val(f.name) || "…"),
         "Телефон: " + (phoneDigits(val(f.phone)).length === 11 ? phoneFmt(phoneDigits(val(f.phone))) : val(f.phone) || "…"),
@@ -120,7 +150,7 @@
       fieldsBox.hidden = false; nextBtn.hidden = true; sendBtn.hidden = false;
       if (focus) f.name.focus();
     };
-    nextBtn.addEventListener("click", () => openFields(true));
+    nextBtn.addEventListener("click", () => { if (needService()) openFields(true); });
 
     // копирование: сначала синхронно (работает в любом браузере в момент нажатия), потом через Clipboard API
     const copy = (text) => {
@@ -154,6 +184,7 @@
 
     sendBtn.addEventListener("click", (e) => {
       if (!tg) { e.preventDefault(); return; }
+      if (!needService()) { e.preventDefault(); status.hidden = true; return; }
       openFields(false);
       const okAll = ["name", "phone", "car"].map(showErr).every(Boolean);
       compose();
